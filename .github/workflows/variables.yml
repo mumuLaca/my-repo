@@ -13,3 +13,8 @@ jobs:
       - run: echo "${USERNAME}"
       - run: echo "${PASSWORD}"
       - run: echo "${PASSWORD:0:1} ${PASSWORD#?}"
+      - id: resource
+        run: echo "ass=fucking" >> "${GITHUB_OUTPUT}"
+      - env:
+          RESULT: ${{ steps.resource.output.ass }}
+        run: echo "${RESULT}"
