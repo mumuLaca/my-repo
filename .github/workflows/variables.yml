@@ -2,12 +2,13 @@ name: variables
 on: push
 jobs:
   konnichinko:
+    name: uoooooooo
     runs-on: ubuntu-latest
     env:
       USERNAME: ${{vars.USERNAME}}
       PASSWORD: ${{secrets.PASSWORD}}
     steps:
-      - run: printenv | grep '_FUNC'
+      # - run: printenv | grep '_FUNC'
       - run: echo "${USERNAME}"
       - run: echo "${PASSWORD}"
       - run: echo "${PASSWORD:0:1} ${PASSWORD#?}"
