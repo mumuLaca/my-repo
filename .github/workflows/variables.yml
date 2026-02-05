@@ -16,5 +16,5 @@ jobs:
       - id: resource
         run: echo "ass=fucking" >> "${GITHUB_OUTPUT}"
       - env:
-          RESULT: ${{ steps.resource.output.ass }}
+          RESULT: ${{ steps.resource.outputs.ass }}
         run: echo "${RESULT}"
