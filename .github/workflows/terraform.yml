@@ -1,0 +1,94 @@
+# # このワークフローは Terraform CLI の最新バージョンをインストールし、Terraform Cloud（app.terraform.io）向けの
+# # API トークンを使って Terraform CLI の設定ファイルを構成します。プルリクエストでは
+# # `terraform init`、`terraform fmt`、`terraform plan`（Terraform Cloud 経由の推測プラン）を実行し、
+# # "main" ブランチへの push では `terraform apply` を実行します。
+# #
+# # `hashicorp/setup-terraform` のドキュメントはこちら: https://github.com/hashicorp/setup-terraform
+# #
+# # このワークフローを利用するには、以下のセットアップ手順を完了してください。
+# #
+# # 1. このリポジトリのルートに `remote` バックエンドと 1 つ以上のリソースを定義した `main.tf` を作成します。
+# #   `main.tf` の例:
+# #     # `remote` バックエンドの設定。
+# #     terraform {
+# #       backend "remote" {
+# #         # Terraform Cloud の組織名。
+# #         organization = "example-organization"
+# #
+# #         # Terraform 状態ファイルを保存する Terraform Cloud ワークスペース名。
+# #         workspaces {
+# #           name = "example-workspace"
+# #         }
+# #       }
+# #     }
+# #
+# #     # 何もしないサンプルのリソース。
+# #     resource "null_resource" "example" {
+# #       triggers = {
+# #         value = "A example resource that does nothing!"
+# #       }
+# #     }
+# #
+# #
+# # 2. Terraform Cloud のユーザー API トークンを生成し、このリポジトリの GitHub シークレット（例: TF_API_TOKEN）として保存します。
+# #   ドキュメント:
+# #     - https://www.terraform.io/docs/cloud/users-teams-organizations/api-tokens.html
+# #     - https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
+# #
+# # 3. `hashicorp/setup-terraform` GitHub Action を使うステップで GitHub シークレットを参照します。
+# #   例:
+# #     - name: Setup Terraform
+# #       uses: hashicorp/setup-terraform@v1
+# #       with:
+# #         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+# name: 'Terraform'
+
+# on:
+#   push:
+#     branches: [ "main" ]
+#   pull_request:
+
+# permissions:
+#   contents: read
+
+# jobs:
+#   terraform:
+#     name: 'Terraform'
+#     runs-on: ubuntu-latest
+#     environment: production
+
+#     # GitHub Actions ランナーが ubuntu-latest / macos-latest / windows-latest のいずれでも Bash シェルを使用
+#     defaults:
+#       run:
+#         shell: bash
+
+#     steps:
+#     # リポジトリを GitHub Actions ランナーにチェックアウト
+#     - name: Checkout
+#       uses: actions/checkout@v4
+
+#     # Terraform CLI の最新バージョンをインストールし、Terraform Cloud のユーザー API トークンで設定ファイルを構成
+#     - name: Setup Terraform
+#       uses: hashicorp/setup-terraform@v1
+#       with:
+#         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+#     # 初期ファイル作成、リモート状態の読み込み、モジュールのダウンロードなどを行い Terraform 作業ディレクトリを初期化
+#     - name: Terraform Init
+#       run: terraform init
+
+#     # すべての Terraform 設定ファイルが標準フォーマットに準拠しているか確認
+#     - name: Terraform Format
+#       run: terraform fmt -check
+
+#     # Terraform の実行計画を生成
+#     - name: Terraform Plan
+#       run: terraform plan -input=false
+
+#       # "main" への push 時に Terraform 設定ファイルに従ってインフラを作成または変更
+#       # 注: リポジトリに "Terraform Cloud" の必須 "strict" ステータスチェックを設定することを推奨します。
+#       # 詳細は "strict" 必須ステータスチェックのドキュメントを参照: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
+#     - name: Terraform Apply
+#       if: github.ref == 'refs/heads/"main"' && github.event_name == 'push'
+#       run: terraform apply -auto-approve -input=false
